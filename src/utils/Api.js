@@ -27,24 +27,24 @@ class Api {
         .then(this._checkResponse)
     }
 
-    pathUserInfo(data) {
+    pathUserInfo(name, about) {
         return fetch(`${this._url}/users/me`, {
             method: 'PATCH',
             headers: this._headers,
             body: JSON.stringify({
-                name: data.name,
-                about: data.about})
+                name: name,
+                about: about})
         })
         .then(this._checkResponse)
     }
 
-    createCard(data) {
+    createCard(name, link) {
         return fetch(`${this._url}/cards`, {
             method: 'POST',
             headers: this._headers,
             body: JSON.stringify({
-                name: data.name,
-                link: data.link})
+                name: name,
+                link: link})
         })
         .then(this._checkResponse)
     }
@@ -73,16 +73,20 @@ class Api {
         .then(this._checkResponse)
     }
 
-    changeAvatar(data) {
+    changeAvatar(avatar) {
         return fetch(`${this._url}/users/me/avatar`, {
             method: 'PATCH',
             headers: this._headers,
             body: JSON.stringify({
-                avatar: data.avatar
+                avatar: avatar
             })
         })
         .then(this._checkResponse) 
     }
+
+    changeLikeCardStatus(cardId, isLiked) {
+        return !isLiked ? this.dislikeCard(cardId) : this.likeCard(cardId);
+      }
 }
 
 const api = new Api({

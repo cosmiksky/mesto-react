@@ -8,6 +8,8 @@ import AddPopup from './components/AddPopup.js';
 import AvatarPopup from './components/AvatarPopup.js';
 import ImagePopup from './components/ImagePopup.js';
 import DeletePopup from './components/DeletePopup.js';
+import CurrentUserContext from '../src/contexts/CurrentUserContext.js';
+import api from '../src/utils/Api.js';
 
 function App() {
 
@@ -18,9 +20,81 @@ function App() {
 
   const [selectedCard, setSelectedCard] = React.useState(null);
 
-  // function handleDeleteClick() {
-  //   setIsDeletePopupOpen(true)
-  // }
+  const [currentUser, setCurrentUser] = React.useState()
+  const [cards, setCards] = React.useState([]);
+
+  React.useEffect(() => {
+    api.getUserInfo()
+    .then((userInfo) => {
+      setCurrentUser(userInfo)
+    })
+    .catch(() => {
+      console.error('ошибка получения данных')
+    })
+  }, [])
+
+  React.useEffect(() => {
+    api.getAllCards()
+    .then((cards) => {
+      setCards(cards)
+    })
+    .catch(() => {
+      console.error('Ошибка загрузки карточек')
+    })
+  }, [])
+
+  function handleUpdateUser({name, about}) {
+    api.pathUserInfo(name, about)
+    .then((updatedUser) => {
+      setCurrentUser(updatedUser);
+      closeAllPopups();
+   })
+    .catch(() => {
+      console.error('ошибка обновления данных')
+    })
+  }
+
+  function handleUpdateAvatar({avatar}) {
+    api.changeAvatar(avatar)
+    .then((user) => {
+         ({...currentUser, avatar: user.avatar});
+        closeAllPopups();
+    })
+    .catch(() => {
+      console.error('ошибка обновления данных')
+      });
+  }
+
+  function handleAddPlaceSubmit({name, link}) {
+    api.createCard(name, link)
+    .then((newCard) => {
+      setCards([newCard, ...cards]);
+      closeAllPopups();
+    })
+    .catch(() => {
+      console.error('ошибка обновления данных')
+      });
+  }
+
+  function handleCardLike(card) {
+    // Снова проверяем, есть ли уже лайк на этой карточке
+    const isLiked = card.likes.some(i => i._id === currentUser._id);
+    
+    // Отправляем запрос в API и получаем обновлённые данные карточки
+    api.changeLikeCardStatus(card._id, !isLiked).then((newCard) => {
+        setCards((state) => state.map((c) => c._id === card._id ? newCard : c));
+    });
+}
+
+  function handleDeleteCard(card) {
+    api.deleteCard(card._id)
+    .then(() => {
+      setCards((state) => state.filter((c) => c._id !== card._id));
+   })
+    .catch(() => {
+      console.error('error')
+    })
+  }
 
   function handleEditProfileClick() {
   //  document.querySelector('#edit-popup').classList.add('popup_is-open')
@@ -49,16 +123,18 @@ function App() {
   }
 
   return (
+   <CurrentUserContext.Provider value={currentUser}>
     <div className="page">
         <Header />
-        <Main onEditProfile = {handleEditProfileClick} onAddPlace = {handleAddPlaceClick} onEditAvatar = {handleEditAvatarClick} onClose = {closeAllPopups} onCardClick = {handleCardClick} />
+        <Main cards={cards} onEditProfile = {handleEditProfileClick} onAddPlace = {handleAddPlaceClick} onEditAvatar = {handleEditAvatarClick} onClose = {closeAllPopups} onCardClick = {handleCardClick} onCardLike = {handleCardLike} onCardDelete = {handleDeleteCard} />
         <Footer />
-        <EditProfilePopup isEditProfilePopupOpen = {isEditProfilePopupOpen} closeAllPopups = {closeAllPopups} />
-        <AddPopup isAddPlacePopupOpen = {isAddPlacePopupOpen} closeAllPopups = {closeAllPopups} />
-        <AvatarPopup isEditAvatarPopupOpen = {isEditAvatarPopupOpen} closeAllPopups = {closeAllPopups} />
+        <EditProfilePopup isOpen = {isEditProfilePopupOpen} closeAllPopups = {closeAllPopups} onUpdateUser={handleUpdateUser} />
+        <AddPopup isAddPlacePopupOpen = {isAddPlacePopupOpen} closeAllPopups = {closeAllPopups} onAddPlace={handleAddPlaceSubmit} />
+        <AvatarPopup isOpen = {isEditAvatarPopupOpen} closeAllPopups = {closeAllPopups} onUpdateAvatar={handleUpdateAvatar} />
         {/* <DeletePopup isDeletePopupOpen={isDeletePopupOpen} closeAllPopups = {closeAllPopups}></DeletePopup> */}
         <ImagePopup card={selectedCard} onClose={closeAllPopups} />
     </div>
+    </CurrentUserContext.Provider>
   );
 }
 
