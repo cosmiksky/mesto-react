@@ -8,7 +8,7 @@ import AddPopup from './components/AddPopup.js';
 import AvatarPopup from './components/AvatarPopup.js';
 import ImagePopup from './components/ImagePopup.js';
 import DeletePopup from './components/DeletePopup.js';
-import CurrentUserContext from '../src/contexts/CurrentUserContext.js';
+import CurrentUserContext from '../src/contexts/CurrentUserContext';
 import api from '../src/utils/Api.js';
 
 function App() {
@@ -20,7 +20,7 @@ function App() {
 
   const [selectedCard, setSelectedCard] = React.useState(null);
 
-  const [currentUser, setCurrentUser] = React.useState()
+  const [currentUser, setCurrentUser] = React.useState('')
   const [cards, setCards] = React.useState([]);
 
   React.useEffect(() => {
@@ -54,10 +54,10 @@ function App() {
     })
   }
 
-  function handleUpdateAvatar({avatar}) {
-    api.changeAvatar(avatar)
+  function handleUpdateAvatar(newAvatar) {
+    api.changeAvatar(newAvatar.avatar)
     .then((user) => {
-         ({...currentUser, avatar: user.avatar});
+        setCurrentUser({...currentUser, avatar: user.avatar});
         closeAllPopups();
     })
     .catch(() => {
@@ -81,9 +81,13 @@ function App() {
     const isLiked = card.likes.some(i => i._id === currentUser._id);
     
     // Отправляем запрос в API и получаем обновлённые данные карточки
-    api.changeLikeCardStatus(card._id, !isLiked).then((newCard) => {
+    api.changeLikeCardStatus(card._id, !isLiked)
+    .then((newCard) => {
         setCards((state) => state.map((c) => c._id === card._id ? newCard : c));
-    });
+    })
+    .catch(() => {
+      console.error('ошибка')
+    })
 }
 
   function handleDeleteCard(card) {
@@ -134,7 +138,7 @@ function App() {
         {/* <DeletePopup isDeletePopupOpen={isDeletePopupOpen} closeAllPopups = {closeAllPopups}></DeletePopup> */}
         <ImagePopup card={selectedCard} onClose={closeAllPopups} />
     </div>
-    </CurrentUserContext.Provider>
+   </CurrentUserContext.Provider>
   );
 }
 
