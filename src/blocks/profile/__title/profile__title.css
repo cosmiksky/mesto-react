@@ -5,7 +5,8 @@
     line-height: 48px;
     margin: 0;
     max-width: 294px;
-    text-align: center;
+    min-width: 250px;
+    text-align: start;
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
